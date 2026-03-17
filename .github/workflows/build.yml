@@ -109,7 +109,7 @@ jobs:
           fi
           
           # Minimal test
-          ./configure --disable-shared --enable-static $CONFIG_ARGS
+          ./configure $CONFIG_ARGS
           make -j$(nproc)
 
       - name: Tag and push
