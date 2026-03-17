@@ -110,7 +110,7 @@ jobs:
           fi
           
           # Minimal test
-          ./configure --without-libps $CONFIG_ARGS
+          ./configure --disable-docs --without-libps $CONFIG_ARGS
           make -j$(nproc)
 
       - name: Tag and push
