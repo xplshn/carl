@@ -43,8 +43,9 @@ jobs:
         run: |
           # Track the latest release.
           # If the BearSSL patch fails to apply to this new version, the build will fail.
-          TAG=$(wget -qO- https://api.github.com/repos/curl/curl/releases/latest | jq -r '.tag_name')
-          VERSION=$(echo "$TAG" | sed 's/^curl-//' | tr '_' '.')
+          #TAG=$(wget -qO- https://api.github.com/repos/curl/curl/releases/latest | jq -r '.tag_name')
+          TAG="curl-8_17_0"
+          #VERSION=$(echo "$TAG" | sed 's/^curl-//' | tr '_' '.')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Download and extract curl
