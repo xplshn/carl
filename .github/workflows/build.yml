@@ -23,7 +23,8 @@ jobs:
             musl-dev clang llvm lld elfutils-dev ncurses-dev \
             bearssl bearssl-dev bearssl-static \
             git make zstd xz jq patch diffutils wget \
-            byacc flex autoconf automake libtool pkgconf
+            byacc flex autoconf automake libtool pkgconf \
+            libpsl-dev
 
       - name: Checkout master
         uses: actions/checkout@v4
