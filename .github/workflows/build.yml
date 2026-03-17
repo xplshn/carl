@@ -41,7 +41,8 @@ jobs:
       - name: Fetch latest stable curl version
         id: curl
         run: |
-          # Fetch the latest release tag from GitHub and format it (e.g., curl-8_12_1 -> 8.12.1)
+          # Track the latest release.
+          # If the BearSSL patch fails to apply to this new version, the build will fail.
           TAG=$(wget -qO- https://api.github.com/repos/curl/curl/releases/latest | jq -r '.tag_name')
           VERSION=$(echo "$TAG" | sed 's/^curl-//' | tr '_' '.')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
@@ -97,7 +98,6 @@ jobs:
           NM: llvm-nm
           RANLIB: llvm-ranlib
         run: |
-          # The patch likely touches configure.ac or Makefile.am
           autoreconf -fi || true
           
           # Setup configuration arguments based on matrix
