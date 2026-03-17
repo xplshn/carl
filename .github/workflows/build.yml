@@ -1,0 +1,120 @@
+name: build-carl
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        branch:
+          - name: carl
+            use_bearssl: false
+          - name: carl-bssl
+            use_bearssl: true
+    container:
+      image: alpine:latest
+    steps:
+      - name: Install toolchain
+        run: |
+          apk add --no-cache \
+            musl-dev clang llvm lld elfutils-dev ncurses-dev \
+            bearssl bearssl-dev bearssl-static \
+            git make zstd xz jq patch diffutils wget \
+            byacc flex autoconf automake libtool pkgconf
+
+      - name: Checkout master
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config --global init.defaultBranch master
+          git config --global user.email "anto@xplshn.com.ar"
+          git config --global user.name "xplshn"
+
+      - name: Fetch latest stable curl version
+        id: curl
+        run: |
+          # Fetch the latest release tag from GitHub and format it (e.g., curl-8_12_1 -> 8.12.1)
+          TAG=$(wget -qO- https://api.github.com/repos/curl/curl/releases/latest | jq -r '.tag_name')
+          VERSION=$(echo "$TAG" | sed 's/^curl-//' | tr '_' '.')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download and extract curl
+        run: |
+          VERSION=${{ steps.curl.outputs.version }}
+          URL="https://curl.se/download/curl-${VERSION}.tar.xz"
+          wget -q "$URL"
+          tar -xf "curl-${VERSION}.tar.xz"
+
+      - name: Setup branch
+        run: |
+          BRANCH="${{ matrix.branch.name }}"
+          git fetch origin "$BRANCH" || true
+          if git show-ref --verify --quiet "refs/remotes/origin/$BRANCH"; then
+            git checkout -B "$BRANCH" "origin/$BRANCH"
+            git rm -rf . || true
+          else
+            git checkout --orphan "$BRANCH"
+            git rm -rf . || true
+          fi
+
+      - name: Import curl
+        run: |
+          VERSION=${{ steps.curl.outputs.version }}
+          cp -r "curl-${VERSION}"/* .
+          rm -rf "curl-${VERSION}" *.tar.xz
+          git add .
+          git commit -m "Import Curl ${VERSION}" || echo "No changes"
+
+      - name: Download and apply BearSSL patch
+        if: ${{ matrix.branch.use_bearssl }}
+        run: |
+          wget -q "https://codeberg.org/shrub900/derive-ports/raw/branch/main/core/curl/bearssl-support-curl-8.17.0.patch" -O bearssl.patch          
+          
+          patch -p1 --forward --no-backup-if-mismatch < bearssl.patch || {
+            echo "Failed to apply BearSSL patch"
+            exit 1
+          }
+          
+          # Cleanup and commit
+          rm bearssl.patch
+          git add -A
+          git diff --cached --stat
+          git commit -m "Apply BearSSL support patch" || echo "No changes to commit"
+
+      - name: Build test
+        env:
+          CC: clang
+          LD: ld.lld
+          AR: llvm-ar
+          NM: llvm-nm
+          RANLIB: llvm-ranlib
+        run: |
+          # The patch likely touches configure.ac or Makefile.am
+          autoreconf -fi || true
+          
+          # Setup configuration arguments based on matrix
+          if [ "${{ matrix.branch.use_bearssl }}" = "true" ]; then
+            CONFIG_ARGS="--with-bearssl"
+          else
+            CONFIG_ARGS="--without-ssl"
+          fi
+          
+          # Minimal test
+          ./configure --disable-shared --enable-static $CONFIG_ARGS
+          make -j$(nproc)
+
+      - name: Tag and push
+        run: |
+          VERSION=${{ steps.curl.outputs.version }}
+          BRANCH="${{ matrix.branch.name }}"
+          git tag -f "${BRANCH}-${VERSION}"
+          git push -f origin "$BRANCH"
+          git push origin --tags -f
