@@ -86,6 +86,8 @@ jobs:
             exit 1
           }
           
+          autoreconf -fi
+          
           # Cleanup and commit
           rm bearssl.patch
           git add -A
