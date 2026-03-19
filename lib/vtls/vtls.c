@@ -56,7 +56,6 @@
 #include "wolfssl.h"        /* wolfSSL versions */
 #include "schannel.h"       /* Schannel SSPI version */
 #include "mbedtls.h"        /* mbedTLS versions */
-#include "bearssl.h"        /* BearSSL versions */
 #include "rustls.h"         /* Rustls versions */
 
 #include "../slist.h"
@@ -1028,8 +1027,6 @@ const struct Curl_ssl *Curl_ssl =
   &Curl_ssl_rustls;
 #elif defined(USE_OPENSSL)
   &Curl_ssl_openssl;
-#elif defined(USE_BEARSSL)
-  &Curl_ssl_bearssl;
 #elif defined(USE_SCHANNEL)
   &Curl_ssl_schannel;
 #else
@@ -1051,9 +1048,6 @@ static const struct Curl_ssl *available_backends[] = {
 #endif
 #ifdef USE_SCHANNEL
   &Curl_ssl_schannel,
-#endif
-#ifdef USE_BEARSSL
-  &Curl_ssl_bearssl,
 #endif
 #ifdef USE_RUSTLS
   &Curl_ssl_rustls,
