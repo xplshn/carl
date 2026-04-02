@@ -676,6 +676,9 @@ ${SIZEOF_TIME_T_CODE}
 /* if mbedTLS <4 has the mbedtls_des_crypt_ecb function. */
 #cmakedefine HAVE_MBEDTLS_DES_CRYPT_ECB 1
 
+/* if BearSSL is enabled */
+#cmakedefine USE_BEARSSL 1
+
 /* if Rustls is enabled */
 #cmakedefine USE_RUSTLS 1
 
