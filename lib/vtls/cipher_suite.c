@@ -23,7 +23,7 @@
  ***************************************************************************/
 #include "../curl_setup.h"
 
-#if defined(USE_MBEDTLS) || defined(USE_RUSTLS)
+#if defined(USE_MBEDTLS) || defined(USE_BEARSSL) || defined(USE_RUSTLS)
 #include "cipher_suite.h"
 #include <string.h>
 
@@ -79,7 +79,7 @@ static const char *cs_txt =
   "SHA" "\0"
   "SHA256" "\0"
   "SHA384" "\0"
-#ifdef USE_MBEDTLS
+#if defined(USE_MBEDTLS) || defined(USE_BEARSSL)
   "ARIA" "\0"
   "ARIA128" "\0"
   "ARIA256" "\0"
@@ -120,7 +120,7 @@ enum {
   CS_TXT_IDX_SHA,
   CS_TXT_IDX_SHA256,
   CS_TXT_IDX_SHA384,
-#ifdef USE_MBEDTLS
+#if defined(USE_MBEDTLS) || defined(USE_BEARSSL)
   CS_TXT_IDX_ARIA,
   CS_TXT_IDX_ARIA128,
   CS_TXT_IDX_ARIA256,
@@ -159,7 +159,7 @@ struct cs_entry {
 /* !checksrc! disable COMMANOSPACE all */
 static const struct cs_entry cs_list [] = {
   /* TLS 1.3 ciphers */
-#if defined(USE_MBEDTLS) || defined(USE_RUSTLS)
+#if defined(USE_MBEDTLS) || defined(USE_BEARSSL) || defined(USE_RUSTLS)
   CS_ENTRY(0x1301, TLS,AES,128,GCM,SHA256,,,),
   CS_ENTRY(0x1302, TLS,AES,256,GCM,SHA384,,,),
   CS_ENTRY(0x1303, TLS,CHACHA20,POLY1305,SHA256,,,,),
@@ -321,7 +321,19 @@ static const struct cs_entry cs_list [] = {
   CS_ENTRY(0xCCAB, TLS,PSK,WITH,CHACHA20,POLY1305,SHA256,,),
   CS_ENTRY(0xCCAB, PSK,CHACHA20,POLY1305,,,,,),
 #endif
-#ifdef USE_MBEDTLS
+#ifdef USE_BEARSSL
+  CS_ENTRY(0x000A, TLS,RSA,WITH,3DES,EDE,CBC,SHA,),
+  CS_ENTRY(0x000A, DES,CBC3,SHA,,,,,),
+  CS_ENTRY(0xC003, TLS,ECDH,ECDSA,WITH,3DES,EDE,CBC,SHA),
+  CS_ENTRY(0xC003, ECDH,ECDSA,DES,CBC3,SHA,,,),
+  CS_ENTRY(0xC008, TLS,ECDHE,ECDSA,WITH,3DES,EDE,CBC,SHA),
+  CS_ENTRY(0xC008, ECDHE,ECDSA,DES,CBC3,SHA,,,),
+  CS_ENTRY(0xC00D, TLS,ECDH,RSA,WITH,3DES,EDE,CBC,SHA),
+  CS_ENTRY(0xC00D, ECDH,RSA,DES,CBC3,SHA,,,),
+  CS_ENTRY(0xC012, TLS,ECDHE,RSA,WITH,3DES,EDE,CBC,SHA),
+  CS_ENTRY(0xC012, ECDHE,RSA,DES,CBC3,SHA,,,),
+#endif
+#if defined(USE_MBEDTLS) || defined(USE_BEARSSL)
   CS_ENTRY(0xC09C, TLS,RSA,WITH,AES,128,CCM,,),
   CS_ENTRY(0xC09C, AES128,CCM,,,,,,),
   CS_ENTRY(0xC09D, TLS,RSA,WITH,AES,256,CCM,,),
@@ -707,4 +719,4 @@ int Curl_cipher_suite_get_str(uint16_t id, char *buf, size_t buf_size,
   return r;
 }
 
-#endif /* defined(USE_MBEDTLS) || defined(USE_RUSTLS) */
+#endif /* defined(USE_MBEDTLS) || defined(USE_BEARSSL) || defined(USE_RUSTLS) */
